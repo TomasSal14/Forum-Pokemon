@@ -1,0 +1,228 @@
+PLANO — BACKOFFICE FORUM POKEMON (pokeforum)
+============================================
+
+Projeto final de DIAM 2025/26. Forum tematico Pokemon com Django (backend) + React (frontend).
+O Tomas e responsavel pelo backoffice (Django Admin + modelos + API base).
+Schema definido pelo grupo. Soft delete em tudo.
+
+
+ESTRUTURA DE FICHEIROS
+----------------------
+
+Projeto/
+  backend/
+    manage.py
+    db.sqlite3
+    requirements.txt
+    README.md
+    pokeforum/
+      __init__.py
+      settings.py
+      urls.py
+      wsgi.py
+    forum/
+      __init__.py
+      models.py
+      admin.py
+      serializers.py
+      views.py
+      urls.py
+      migrations/
+        __init__.py
+      management/
+        commands/
+          create_test_data.py
+  frontend/
+    (React — outros elementos do grupo)
+
+
+TIPOS DE UTILIZADORES
+---------------------
+
+Anonymous  | Nao autenticado    | Ver boards/posts publicos
+User       | Utilizador normal  | Postar, comentar, votar, mensagens
+Mod        | profile='mod'      | Moderacao (is_staff=True automatico)
+Admin      | profile='admin'    | Acesso total (is_superuser=True automatico)
+
+O campo 'profile' no modelo User define o tipo: user / mod / admin
+O Django gere is_staff e is_superuser automaticamente com base no profile.
+
+
+SOFT DELETE — REGRA DE OURO
+----------------------------
+
+Nunca chamar .delete() em nenhum modelo.
+Todos os modelos tem um campo 'state'. Quando algo e "apagado", state='deleted'.
+O Django Admin usa Acoes personalizadas para soft delete (a acao de delete padrao esta desativada).
+
+state por modelo:
+- User:    active / banned / deleted
+- Board:   active / deleted
+- Post:    active / closed / deleted
+- Comment: active / deleted
+- Poll:    open / closed / deleted
+- Message: unread / read / deleted
+
+
+MODELOS DE DADOS (models.py)
+-----------------------------
+
+USER (estende AbstractUser do Django)
+  profile       -> CharField: user / mod / admin  (default: user)
+  state         -> CharField: active / banned / deleted
+  (creation_date = date_joined, ja existe no AbstractUser)
+
+BOARD (seccao do forum)
+  creator       -> ForeignKey(User)
+  name          -> TextField
+  creation_date -> DateField (auto)
+  public        -> BooleanField (default: True)
+  state         -> CharField (default: active)
+
+BOARDMEMBER (tabela de juncao Board <-> User)
+  board         -> ForeignKey(Board)
+  user          -> ForeignKey(User)
+  creation_date -> DateField (auto)
+
+POST (topico do forum)
+  creator       -> ForeignKey(User)
+  board         -> ForeignKey(Board)
+  content       -> TextField
+  state         -> CharField: active / closed / deleted
+  creation_date -> DateField (auto)
+
+COMMENT (resposta a um post, suporta respostas aninhadas)
+  user           -> ForeignKey(User)
+  post           -> ForeignKey(Post)
+  board          -> ForeignKey(Board)
+  content        -> TextField
+  parent_comment -> ForeignKey('self', opcional) — para respostas a comentarios
+  state          -> CharField: active / deleted
+  creation_date  -> DateField (auto)
+  Nota: parent_comment usa SET_NULL — apagar um pai nao apaga as respostas
+
+POLL (votacao independente)
+  creator       -> ForeignKey(User)
+  name          -> TextField
+  state         -> CharField: open / closed / deleted
+  creation_date -> DateField (auto)
+
+POLLOPTION (opcao de resposta a uma poll)
+  poll          -> ForeignKey(Poll)
+  label         -> CharField
+  creation_date -> DateField (auto)
+
+POLLANSWER (registo de quem votou em que opcao)
+  poll          -> ForeignKey(Poll)
+  poll_option   -> ForeignKey(PollOption)
+  user          -> ForeignKey(User)
+  creation_date -> DateField (auto)
+  Nota: unique_together (poll, user) — impede votos duplos
+
+MESSAGE (mensagem privada, nao em tempo real)
+  user_sent_it  -> ForeignKey(User)
+  user_receiver -> ForeignKey(User)
+  content       -> TextField
+  state         -> CharField: unread / read / deleted
+  creation_date -> DateField (auto)
+
+
+BACKOFFICE — admin.py
+-----------------------
+
+Configuracao global: acao de delete padrao desativada em todos os modelos.
+
+UserAdmin
+  - Colunas: username, email, state, data_registo, is_staff
+  - Filtros: state, is_staff
+  - Pesquisa: username, email
+  - Acoes: Banir, Reativar, Soft delete
+
+BoardAdmin
+  - Colunas: name, creator, public, state, nr_membros, nr_posts, creation_date
+  - Filtros: public, state
+  - Pesquisa: name, creator
+  - Inline: membros do board + posts do board
+  - Acoes: Soft delete
+
+PostAdmin
+  - Colunas: conteudo (preview), creator, board, state, creation_date
+  - Filtros: board, state, data
+  - Pesquisa: conteudo, creator
+  - Inline: comentarios do post
+  - Acoes: Fechar, Reabrir, Soft delete
+
+CommentAdmin
+  - Colunas: user, board, post, conteudo (preview), state, creation_date
+  - Filtros: board, state, data
+  - Pesquisa: conteudo, user
+  - Acoes: Soft delete
+
+PollAdmin
+  - Colunas: name, creator, state, nr_opcoes, nr_respostas, creation_date
+  - Filtros: state
+  - Inline: opcoes da poll
+  - Acoes: Fechar, Soft delete
+
+MessageAdmin
+  - Colunas: remetente, destinatario, conteudo (preview), state, creation_date
+  - Filtros: state, data
+  - Pesquisa: remetente, destinatario
+  - Acoes: Soft delete
+
+
+API REST (endpoints para o frontend React)
+-------------------------------------------
+
+POST             /api/auth/register/       — criar conta (username, email, password)
+POST             /api/auth/login/          — login (username, password) -> dados do user
+
+GET              /api/users/<id>/          — ver perfil de um utilizador
+
+GET/POST         /api/boards/              — listar / criar boards
+GET/PUT/DELETE   /api/boards/<id>/         — detalhe / editar / apagar board
+GET              /api/boards/<id>/posts/   — posts de um board especifico
+
+GET/POST         /api/posts/               — listar / criar posts
+GET/PUT/DELETE   /api/posts/<id>/          — detalhe / editar / apagar post
+GET/POST         /api/posts/<id>/comments/ — comentarios de um post / criar comentario
+
+GET/POST         /api/polls/               — listar / criar polls
+GET              /api/polls/<id>/          — detalhe de uma poll (com opcoes)
+POST             /api/polls/<id>/vote/     — votar numa poll
+
+GET/POST         /api/messages/            — listar / enviar mensagens
+GET/DELETE       /api/messages/<id>/       — ver / apagar mensagem
+
+Nota: todas as operacoes de "delete" fazem soft delete (state='deleted'), nunca .delete()
+
+
+PACOTES PYTHON NECESSARIOS
+---------------------------
+
+  pip install -r requirements.txt
+
+  (ou manualmente:)
+  pip install django
+  pip install djangorestframework
+
+
+SETTINGS.PY (configuracoes relevantes)
+----------------------------------------
+
+  INSTALLED_APPS: rest_framework, forum
+  AUTH_USER_MODEL = 'forum.User'
+
+
+COMO CORRER (ver README.md no backend/)
+-----------------------------------------
+
+  1. python -m venv venv && venv\Scripts\activate
+  2. pip install -r requirements.txt
+  3. python manage.py migrate
+  4. python manage.py createsuperuser
+  5. python manage.py create_test_data   (opcional, dados de teste)
+  6. python manage.py runserver
+
+  Admin: http://127.0.0.1:8000/admin/
+  API:   http://127.0.0.1:8000/api/
