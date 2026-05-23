@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import User, Board, Post, Comment, Poll, PollAnswer, Message
+from .models import User, Board, BoardMember, Post, Comment, Poll, PollAnswer, Message
 from .serializers import (
     UserSerializer, BoardSerializer, PostSerializer, CommentSerializer,
     PollSerializer, PollAnswerSerializer, MessageSerializer,
@@ -118,6 +118,43 @@ def board_posts(request, pk):
 
 
 # ---------------------------------------------------------------------------
+# Board members
+# ---------------------------------------------------------------------------
+
+@api_view(['POST', 'DELETE'])
+def board_members(request, pk):
+    user_id = request.data.get('userId')
+    target_user_id = request.data.get('targetUserId')
+
+    if not user_id or not target_user_id:
+        return Response({'error': 'userId e targetUserId sao obrigatorios.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        board = Board.objects.get(pk=pk, state='active')
+    except Board.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if board.creator_id != int(user_id):
+        return Response({'error': 'Apenas o criador do board pode gerir membros.'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        target_user = User.objects.get(pk=target_user_id, state='active')
+    except User.DoesNotExist:
+        return Response({'error': 'Utilizador alvo nao encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        member, created = BoardMember.objects.get_or_create(board=board, user=target_user)
+        if not created:
+            return Response({'error': 'Utilizador ja e membro.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'status': 'membro_adicionado'}, status=status.HTTP_201_CREATED)
+
+    deleted, _ = BoardMember.objects.filter(board=board, user=target_user).delete()
+    if deleted == 0:
+        return Response({'error': 'Utilizador nao e membro.'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ---------------------------------------------------------------------------
 # Posts
 # ---------------------------------------------------------------------------
 
@@ -164,7 +201,7 @@ def post_detail(request, pk):
 @api_view(['GET', 'POST'])
 def post_comments(request, pk):
     try:
-        post = Post.objects.get(pk=pk)
+        post = Post.objects.get(pk=pk, state='active')
     except Post.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -177,6 +214,21 @@ def post_comments(request, pk):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'DELETE'])
+def comment_detail(request, pk):
+    try:
+        comment = Comment.objects.get(pk=pk, state='active')
+    except Comment.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(CommentSerializer(comment).data)
+
+    comment.state = 'deleted'
+    comment.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------------------------------------------------------------
@@ -196,14 +248,22 @@ def polls_list(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 def poll_detail(request, pk):
     try:
         poll = Poll.objects.get(pk=pk)
     except Poll.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    return Response(PollSerializer(poll).data)
+    if poll.state == 'deleted':
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(PollSerializer(poll).data)
+
+    poll.state = 'deleted'
+    poll.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['POST'])
@@ -227,10 +287,29 @@ def poll_vote(request, pk):
 @api_view(['GET', 'POST'])
 def messages_list(request):
     if request.method == 'GET':
-        messages = Message.objects.filter(state__in=['unread', 'read'])
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id e obrigatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = Message.objects.filter(
+            user_receiver_id=user_id,
+            state__in=['unread', 'read']
+        )
         return Response(MessageSerializer(messages, many=True).data)
 
     serializer = MessageSerializer(data=request.data)
+    sender_id = request.data.get('user_sent_it')
+    receiver_id = request.data.get('user_receiver')
+
+    if not sender_id or not receiver_id:
+        return Response({'error': 'user_sent_it e user_receiver sao obrigatorios.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not User.objects.filter(pk=sender_id, state='active').exists():
+        return Response({'error': 'Remetente nao encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not User.objects.filter(pk=receiver_id, state='active').exists():
+        return Response({'error': 'Destinatario nao encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -242,6 +321,9 @@ def message_detail(request, pk):
     try:
         message = Message.objects.get(pk=pk)
     except Message.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if message.state == 'deleted':
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
