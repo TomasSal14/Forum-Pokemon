@@ -1,0 +1,182 @@
+.chat-layout-container {
+  display: flex;
+  gap: 20px;
+  background: #110c1c;
+  border: 1px solid #221834;
+  height: calc(100vh - 150px);
+  box-sizing: border-box;
+}
+
+/* 1. BARRA LATERAL DE CONVERSAS PRIVADAS */
+.chat-sidebar-members {
+  width: 240px;
+  border-right: 1px solid #221834;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: #0d0916;
+}
+
+.chat-sidebar-members h3 {
+  font-size: 11px;
+  font-weight: 700;
+  color: #00f0ff;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.chat-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-user-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 0px;
+  border: 1px solid transparent;
+  transition: background 0.2s ease;
+}
+
+/* Destaca a caixa da conversa selecionada */
+.chat-user-item.active {
+  background: #1a122c;
+  border-color: #221834;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.online { 
+  background: #00ff66; 
+}
+
+/* CORRIGIDO: Nomes começam com cinzento discreto integrado no tema */
+.chat-user-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #aaaab8;
+}
+
+/* CORRIGIDO: O nome acende a branco puro no hover ou quando ativo */
+.chat-user-item:hover .chat-user-name,
+.chat-user-item.active .chat-user-name {
+  color: #ffffff;
+}
+
+/* 2. ÁREA DA CONVERSA DIREITA */
+.chat-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #110c1c;
+}
+
+.chat-header-title {
+  padding: 15px 20px;
+  border-bottom: 1px solid #221834;
+  text-align: left;
+}
+
+.chat-header-title h2 {
+  font-size: 15px;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.chat-header-title p {
+  font-size: 11px;
+  color: #888896;
+  margin: 0;
+}
+
+.chat-messages-log {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.chat-message-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+/* Alinhamento visual para as tuas próprias mensagens */
+.chat-message-bubble.me {
+  border-left: 2px solid #00f0ff;
+  padding-left: 10px;
+}
+
+.chat-message-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-message-author {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.chat-message-time {
+  font-size: 10px;
+  color: #555566;
+}
+
+.chat-message-text {
+  font-size: 13px;
+  color: #aaaab8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* CAMPO DE INPUT FIXADO EM BAIXO */
+.chat-input-form {
+  padding: 20px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid #221834;
+  background: #0d0916;
+}
+
+.chat-input-field {
+  flex: 1;
+  background: #110c1c;
+  border: 1px solid #221834;
+  color: #ffffff;
+  padding: 12px 15px;
+  font-size: 13px;
+  outline: none;
+}
+
+.chat-input-field:focus {
+  border-color: #00f0ff;
+}
+
+.chat-send-button {
+  background: #1a122c;
+  border: 1px solid #221834;
+  color: #00f0ff;
+  padding: 0 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-send-button:hover {
+  background: #221834;
+}

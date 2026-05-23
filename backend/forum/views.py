@@ -2,13 +2,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import User, Board, BoardMember, Post, Comment, Poll, PollAnswer, Message
+from .models import User, Board, BoardMember, Post, Comment, Poll, PollOption, PollAnswer, Message
 from .serializers import (
     UserSerializer, BoardSerializer, PostSerializer, CommentSerializer,
     PollSerializer, PollAnswerSerializer, MessageSerializer,
 )
 
 from django.contrib.auth import authenticate
+from django.db.models import Q
 
 
 
@@ -17,12 +18,100 @@ from django.contrib.auth import authenticate
 # ---------------------------------------------------------------------------
 
 @api_view(['GET'])
+def users_list(request):
+    users = User.objects.filter(state='active')
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
 def user_detail(request, pk):
     try:
         user = User.objects.get(pk=pk, state='active')
     except User.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = UserSerializer(user)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def user_content(request, pk):
+    """Get user's posts, comments, and polls. Admins can see deleted content."""
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    # Check if requester is admin
+    admin_id = request.query_params.get('admin_id')
+    is_admin = admin_id and User.objects.filter(pk=admin_id, profile='admin').exists()
+    
+    # Get posts
+    posts_query = Post.objects.filter(creator_id=pk, board__state='active')
+    if not is_admin:
+        posts_query = posts_query.filter(state='active')
+    posts = posts_query
+    
+    # Get comments
+    comments_query = Comment.objects.filter(user_id=pk)
+    if not is_admin:
+        comments_query = comments_query.filter(state='active')
+    comments = comments_query
+    
+    # Get polls
+    polls_query = Poll.objects.filter(creator_id=pk)
+    if not is_admin:
+        polls_query = polls_query.filter(state='active')
+    polls = polls_query
+    
+    return Response({
+        'posts': PostSerializer(posts, many=True).data,
+        'comments': CommentSerializer(comments, many=True).data,
+        'polls': PollSerializer(polls, context={'request': request}, many=True).data,
+    })
+
+
+@api_view(['GET', 'PUT'])
+def user_ban(request, pk):
+    """Ban or unban a user. Admin only."""
+    admin_id = request.query_params.get('admin_id')
+    admin_profile = request.query_params.get('admin_profile')
+    
+    if admin_profile != 'admin':
+        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'GET':
+        return Response(UserSerializer(user).data)
+    
+    # PUT - ban/unban
+    action = request.data.get('action')  # 'ban' or 'unban'
+    
+    if action == 'ban':
+        user.state = 'banned'
+    elif action == 'unban':
+        user.state = 'active'
+    else:
+        return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    user.save()
+    return Response(UserSerializer(user).data)
+
+
+@api_view(['GET'])
+def users_admin_list(request):
+    """Get all users including banned. Admin only."""
+    admin_profile = request.query_params.get('admin_profile')
+    
+    if admin_profile != 'admin':
+        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+    
+    users = User.objects.all().exclude(state='deleted')
+    serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
 
 
@@ -58,6 +147,9 @@ def login(request):
     if user == None:
         return Response({'error': "Dados inválidos"}, status= status.HTTP_401_UNAUTHORIZED)
     
+    if user.state == 'banned':
+        return Response({'error': "User is banned"}, status= status.HTTP_403_FORBIDDEN)
+    
     return Response(UserSerializer(user).data)
 
 
@@ -68,7 +160,16 @@ def login(request):
 @api_view(['GET', 'POST'])
 def boards_list(request):
     if request.method == 'GET':
+        user_id = request.query_params.get('user_id')
         boards = Board.objects.filter(state='active')
+        if user_id:
+            boards = boards.filter(
+                Q(public=True) |
+                Q(creator_id=user_id) |
+                Q(members__user_id=user_id)
+            ).distinct()
+        else:
+            boards = boards.filter(public=True)
         serializer = BoardSerializer(boards, many=True)
         return Response(serializer.data)
 
@@ -97,6 +198,20 @@ def board_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # DELETE — soft delete
+    # Check permissions: creator, mod, or admin can delete
+    user_id = request.query_params.get('user_id')
+    user_profile = request.query_params.get('user_profile')
+    
+    if not user_id:
+        return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    is_creator = int(user_id) == board.creator_id
+    is_mod = user_profile == 'mod'
+    is_admin = user_profile == 'admin'
+    
+    if not (is_creator or is_mod or is_admin):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
     board.state = 'deleted'
     board.save()
     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -121,8 +236,17 @@ def board_posts(request, pk):
 # Board members
 # ---------------------------------------------------------------------------
 
-@api_view(['POST', 'DELETE'])
+@api_view(['GET', 'POST', 'DELETE'])
 def board_members(request, pk):
+    if request.method == 'GET':
+        try:
+            board = Board.objects.get(pk=pk, state='active')
+        except Board.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        members = User.objects.filter(board_memberships__board=board, state='active')
+        return Response(UserSerializer(members, many=True).data)
+
     user_id = request.data.get('userId')
     target_user_id = request.data.get('targetUserId')
 
@@ -161,7 +285,7 @@ def board_members(request, pk):
 @api_view(['GET', 'POST'])
 def posts_list(request):
     if request.method == 'GET':
-        posts = Post.objects.filter(state='active')
+        posts = Post.objects.filter(state='active', board__state='active')
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
@@ -189,6 +313,21 @@ def post_detail(request, pk):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # DELETE — soft delete
+    # Check permissions: creator, mod, or admin can delete
+    user_id = request.query_params.get('user_id')
+    user_profile = request.query_params.get('user_profile')
+    
+    if not user_id:
+        return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    is_creator = int(user_id) == post.creator_id
+    is_mod = user_profile == 'mod'
+    is_admin = user_profile == 'admin'
+    
+    if not (is_creator or is_mod or is_admin):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
     post.state = 'deleted'
     post.save()
     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -226,6 +365,21 @@ def comment_detail(request, pk):
     if request.method == 'GET':
         return Response(CommentSerializer(comment).data)
 
+    # DELETE — soft delete
+    # Check permissions: creator, mod, or admin can delete
+    user_id = request.query_params.get('user_id')
+    user_profile = request.query_params.get('user_profile')
+    
+    if not user_id:
+        return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    is_creator = int(user_id) == comment.user_id
+    is_mod = user_profile == 'mod'
+    is_admin = user_profile == 'admin'
+    
+    if not (is_creator or is_mod or is_admin):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
     comment.state = 'deleted'
     comment.save()
     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -239,12 +393,17 @@ def comment_detail(request, pk):
 def polls_list(request):
     if request.method == 'GET':
         polls = Poll.objects.filter(state__in=['open', 'closed'])
-        return Response(PollSerializer(polls, many=True).data)
+        return Response(PollSerializer(polls, many=True, context={'request': request}).data)
 
     serializer = PollSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        poll = serializer.save()
+        options = request.data.get('options', [])
+        for option in options:
+            label = option.get('label') if isinstance(option, dict) else None
+            if label:
+                PollOption.objects.create(poll=poll, label=label)
+        return Response(PollSerializer(poll, context={'request': request}).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -259,8 +418,23 @@ def poll_detail(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        return Response(PollSerializer(poll).data)
+        return Response(PollSerializer(poll, context={'request': request}).data)
 
+    # DELETE — soft delete
+    # Check permissions: creator, mod, or admin can delete
+    user_id = request.query_params.get('user_id')
+    user_profile = request.query_params.get('user_profile')
+    
+    if not user_id:
+        return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    is_creator = int(user_id) == poll.creator_id
+    is_mod = user_profile == 'mod'
+    is_admin = user_profile == 'admin'
+    
+    if not (is_creator or is_mod or is_admin):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+    
     poll.state = 'deleted'
     poll.save()
     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -280,6 +454,25 @@ def poll_vote(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+def poll_close(request, pk):
+    user_id = request.data.get('user_id')
+    if not user_id:
+        return Response({'error': 'user_id e obrigatorio.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        poll = Poll.objects.get(pk=pk)
+    except Poll.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if poll.creator_id != int(user_id):
+        return Response({'error': 'Apenas o criador pode fechar a poll.'}, status=status.HTTP_403_FORBIDDEN)
+
+    poll.state = 'closed'
+    poll.save()
+    return Response(PollSerializer(poll, context={'request': request}).data)
+
+
 # ---------------------------------------------------------------------------
 # Messages
 # ---------------------------------------------------------------------------
@@ -292,7 +485,7 @@ def messages_list(request):
             return Response({'error': 'user_id e obrigatorio.'}, status=status.HTTP_400_BAD_REQUEST)
 
         messages = Message.objects.filter(
-            user_receiver_id=user_id,
+            Q(user_receiver_id=user_id) | Q(user_sent_it_id=user_id),
             state__in=['unread', 'read']
         )
         return Response(MessageSerializer(messages, many=True).data)
