@@ -54,7 +54,7 @@ class PollSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_total_answers(self, obj):
-        return sum(option.answers.count() for option in obj.options.all())
+        return obj.answers.count()
 
     def get_has_voted(self, obj):
         request = self.context.get('request')
@@ -64,6 +64,8 @@ class PollSerializer(serializers.ModelSerializer):
         if not user_id:
             return False
         return obj.answers.filter(user_id=user_id).exists()
+
+
 class PollAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model  = PollAnswer
