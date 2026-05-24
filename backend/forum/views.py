@@ -27,7 +27,7 @@ def users_list(request):
 @api_view(['GET'])
 def user_detail(request, pk):
     try:
-        user = User.objects.get(pk=pk, state='active')
+        user = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = UserSerializer(user)
@@ -487,7 +487,7 @@ def messages_list(request):
         messages = Message.objects.filter(
             Q(user_receiver_id=user_id) | Q(user_sent_it_id=user_id),
             state__in=['unread', 'read']
-        )
+        ).order_by('creation_date', 'id')
         return Response(MessageSerializer(messages, many=True).data)
 
     serializer = MessageSerializer(data=request.data)

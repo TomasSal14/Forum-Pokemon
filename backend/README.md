@@ -9,7 +9,7 @@
 **1. Criar e ativar o ambiente virtual**
 ```
 python/py -m venv venv
-venv\Scripts\activate
+source venv\Scripts\activate
 ```
 
 **2. Instalar dependências**
