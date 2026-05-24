@@ -1,0 +1,228 @@
+================================================================================
+  POKEFORUM — PROJECT REPORT
+================================================================================
+
+--------------------------------------------------------------------------------
+1. THEME AND DESCRIPTION
+--------------------------------------------------------------------------------
+
+PokeForum is a Pokémon-themed community forum web application. It provides a
+space where fans can create discussion boards, write posts, leave comments,
+participate in polls, and exchange direct messages with other users. The visual
+identity uses a dark colour scheme with neon cyan and red accents, a Pokéball
+logo, and a decorative Pokémon-themed background — giving the interface a
+distinct personality consistent with the franchise.
+
+The application follows a full-stack architecture:
+  - Backend:  Django 6 + Django REST Framework — REST API over SQLite
+  - Frontend: React 19 + React Router 7 — single-page application built with
+              Vite 6
+
+--------------------------------------------------------------------------------
+2. MAIN FUNCTIONALITIES
+--------------------------------------------------------------------------------
+
+AUTHENTICATION
+  - Register with username, e-mail, and password.
+  - Login with username and password; banned accounts are rejected at login.
+  - Session state is held in React component state (currentUser prop, no
+    localStorage or tokens in this version).
+
+BOARDS
+  - Any logged-in user can create a public or private board.
+  - Private boards are only visible to their creator and invited members.
+  - The creator (or a moderator/admin) can delete a board (soft delete).
+  - The creator can add and remove members from private boards.
+
+POSTS & COMMENTS
+  - Users can create posts inside any board they have access to.
+  - Each post can receive threaded comments (with optional parent_comment FK
+    for reply nesting in the data model).
+  - The creator, moderators, and admins can soft-delete posts and comments.
+  - Clicking a username anywhere in the app opens a profile modal with that
+    user's activity history.
+
+POLLS
+  - Users can create polls with multiple custom options inside a board.
+  - Each user can vote on an open poll exactly once (enforced by a database
+    unique_together constraint on PollAnswer).
+  - Vote counts and a "has voted" flag are returned by the API so the UI can
+    lock the form after voting.
+  - The poll creator can close a poll; moderators and admins can delete it.
+
+DIRECT MESSAGES (CHAT)
+  - Users can send direct messages to any active user.
+  - The chat sidebar lists all users; selecting one loads the shared
+    conversation ordered chronologically.
+  - Messages have unread / read / deleted states.
+
+USER MANAGEMENT (ADMIN)
+  - Admin users see a "Users" link in the navigation menu.
+  - The user list shows all non-deleted accounts including banned ones.
+  - Admins can ban or unban any non-admin user via an action modal.
+  - A profile modal (accessible from any username click) shows the user's
+    posts, comments, and polls; admins can see soft-deleted content too.
+
+ROLE SYSTEM
+  Three roles are supported: user, mod (moderator), and admin.
+  - Moderators can delete any post, comment, board, or poll.
+  - Admins have all moderator privileges plus user ban/unban access.
+  - The custom User model syncs Django's is_staff / is_superuser flags
+    automatically on save so the Django admin panel reflects roles correctly.
+
+--------------------------------------------------------------------------------
+3. REST API ENDPOINTS
+--------------------------------------------------------------------------------
+
+All endpoints are prefixed with /api/
+
+  USERS
+    GET    /users/                   List active users
+    GET    /users/<id>/              Get user by ID (includes banned users)
+    GET    /users/<id>/content/      Get user's posts, comments, and polls
+    PUT    /users/<id>/ban/          Ban or unban a user (admin only)
+    GET    /users/admin/list/        List all non-deleted users (admin only)
+
+  AUTHENTICATION
+    POST   /auth/register/           Create account → returns user object
+    POST   /auth/login/              Authenticate → returns user object
+
+  BOARDS
+    GET    /boards/                  List accessible boards (filtered by user)
+    POST   /boards/                  Create a board
+    GET    /boards/<id>/             Get board detail
+    PUT    /boards/<id>/             Update a board
+    DELETE /boards/<id>/             Soft-delete a board
+    GET    /boards/<id>/posts/       List active posts in a board
+    GET    /boards/<id>/members/     List board members
+    POST   /boards/<id>/members/     Add a member
+    DELETE /boards/<id>/members/     Remove a member
+
+  POSTS
+    GET    /posts/                   List all active posts
+    POST   /posts/                   Create a post
+    GET    /posts/<id>/              Get post detail
+    PUT    /posts/<id>/              Update a post
+    DELETE /posts/<id>/              Soft-delete a post
+    GET    /posts/<id>/comments/     List comments on a post
+    POST   /posts/<id>/comments/     Add a comment to a post
+
+  COMMENTS
+    GET    /comments/<id>/           Get comment detail
+    DELETE /comments/<id>/           Soft-delete a comment
+
+  POLLS
+    GET    /polls/                   List open and closed polls
+    POST   /polls/                   Create a poll with options
+    GET    /polls/<id>/              Get poll with options and vote counts
+    DELETE /polls/<id>/              Soft-delete a poll
+    POST   /polls/<id>/vote/         Submit a vote
+    POST   /polls/<id>/close/        Close a poll (creator only)
+
+  MESSAGES
+    GET    /messages/?user_id=<id>   Get all messages for a user
+    POST   /messages/                Send a message
+    GET    /messages/<id>/           Get message detail
+    DELETE /messages/<id>/           Soft-delete a message
+
+--------------------------------------------------------------------------------
+4. DJANGO ADMIN PANEL  (/admin/)
+--------------------------------------------------------------------------------
+
+All models are registered in forum/admin.py with a fully customised admin
+interface. The default bulk "delete selected" action is disabled globally and
+replaced with soft-delete actions on every model, consistent with the
+application's soft-delete policy.
+
+  User        Actions: ban (sets state=banned, is_active=False), reactivate,
+              soft delete. List shows username, e-mail, state, join date, and
+              is_staff. Custom fieldset exposes the profile and state fields
+              alongside the standard Django user fields.
+
+  Board       Action: soft delete. Inline: posts listed per board.
+              List shows member count and post count via annotated querysets
+              (Count with distinct=True), both sortable columns.
+
+  Post        Actions: close, reopen, soft delete. Inline: comments per post.
+              List includes a content_preview (first 80 chars), date hierarchy
+              for filtering by date.
+
+  Comment     Action: soft delete. raw_id_fields on post and parent_comment
+              (avoids large dropdowns for FK selection).
+
+  Poll        Actions: close, soft delete. Inline: poll options per poll.
+              List shows option count and answer count via annotated querysets.
+
+  Message     Action: soft delete. List shows sender, receiver, and a content
+              preview.
+
+The admin panel is the primary back-office tool: superusers can manage all
+content, perform bulk operations, and inspect the full data including
+soft-deleted records — none of which is possible through the public REST API.
+
+--------------------------------------------------------------------------------
+5. FRONTEND PAGES AND COMPONENTS  (src/)
+--------------------------------------------------------------------------------
+
+PAGES  (src/pages/)
+  Home.jsx        Landing page with a board list carousel, a poll list, and a
+                  search bar. Authenticated users can create boards and polls
+                  directly from this page.
+  Boards.jsx      Board view: lists posts for the selected board, allows
+                  creating posts, expanding a post to read and write comments,
+                  and managing board members (creator only).
+  Chat.jsx        Direct messaging page: user list sidebar + conversation view.
+  Profile.jsx     Shows the logged-in user's own profile data (username, role,
+                  account state, join date).
+  UserList.jsx    Admin-only page listing all users with ban/unban controls and
+                  a profile modal per user.
+  Login.jsx       Login form.
+  Register.jsx    Registration form.
+
+COMPONENTS  (src/components/)
+  BoardsSection.jsx    Renders the board cards grid with optional delete button
+                       for eligible users.
+  PostsSection.jsx     Renders post cards with expand/collapse, comment thread,
+                       and delete controls.
+  PollsSection.jsx     Renders poll cards with voting form, vote bar, close and
+                       delete controls.
+  UserProfileModal.jsx Modal overlay that shows a user's activity (posts,
+                       comments, polls) and admin ban/unban controls. Opened by
+                       clicking any username anywhere in the app.
+
+UTILITIES  (src/utils/)
+  api.js           Exports API_BASE = 'http://127.0.0.1:8000/api' — the single
+                   source of truth for the backend URL.
+  permissions.js   Exports canModerate(currentUser, creatorId) — returns true
+                   if the user is the content creator, a moderator, or an admin.
+                   Used in all four section components to conditionally render
+                   delete buttons.
+  userUtils.jsx    Exports <ClickableUsername> component — a reusable <span>
+                   that stops event propagation and opens the profile modal when
+                   any username is clicked.
+
+--------------------------------------------------------------------------------
+6. STRONG POINTS AND INNOVATIVE ASPECTS
+--------------------------------------------------------------------------------
+
+  - SOFT DELETE THROUGHOUT: no data is ever hard-deleted from the database.
+    All records have a state field (active / deleted / banned). This preserves
+    data integrity and allows admins to audit content.
+
+  - ROLE-AWARE PERMISSION HELPER: the canModerate() utility in permissions.js
+    centralises the moderator/admin/creator check. It is imported by every
+    component that shows delete controls, so permission logic lives in one
+    place.
+
+  - PRIVATE BOARDS WITH MEMBERSHIP: boards can be set private; the boards_list
+    endpoint joins BoardMember to filter results per user, so private boards
+    are never exposed to non-members via the API.
+
+  - POLL INTEGRITY: the PollAnswer model has a unique_together constraint on
+    (poll, user), making duplicate votes impossible at the database level
+    regardless of frontend behaviour.
+
+  - CLICKABLE USERNAME SYSTEM: clicking any username anywhere in the app (post
+    author, comment author, poll creator, chat participant) opens the same
+    UserProfileModal. This reuse avoids duplicated modal JSX across pages.
+
