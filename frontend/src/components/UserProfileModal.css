@@ -1,0 +1,89 @@
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-username {
+  color: #ffffff;
+  font-size: 18px;
+  margin: 0;
+}
+
+.modal-user-role {
+  font-size: 12px;
+  color: #888896;
+  margin: 4px 0 0 0;
+}
+
+/* Admin actions (ban/unban) */
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ban-button-active {
+  background: #22cc22 !important;
+}
+
+.ban-button-inactive {
+  background: #cc2222 !important;
+}
+
+/* User content section */
+.user-content-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-content-title {
+  color: #00f0ff;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.content-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.content-subsection-title {
+  color: #ffffff;
+  font-size: 11px;
+  margin: 0 0 8px 0;
+}
+
+/* Direct message form */
+.dm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dm-textarea {
+  background: #1a122c;
+  border: 1px solid #221834;
+  padding: 10px 12px;
+  color: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  resize: vertical;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.dm-textarea:focus {
+  border-color: #00f0ff;
+}
+
+.modal-note {
+  font-size: 12px;
+  color: #888896;
+  margin: 0;
+}

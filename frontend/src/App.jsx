@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import logoPokebola from './pokebola.png'; 
+import logoPokebola from './pokebola.png';
 import Home from './pages/Home';
 import Boards from './pages/Boards';
-import Chat from './pages/Chat'; // ADICIONADO: Importa a nova página do Chat
-import UserList from './pages/UserList'; // ADICIONADO: Importa a página de UserList para admins
+import Chat from './pages/Chat';
+import UserList from './pages/UserList';
 import './App.css';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
@@ -13,19 +13,16 @@ import Register from './pages/Register';
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-  };
+  const handleLogout = () => setCurrentUser(null);
 
   return (
     <Router>
       <div className="App">
-        
-        <div className="fundo-pokemon"></div>
+        <div className="fundo-pokemon" />
 
         <header className="topbar">
           <div className="logo-container">
-            <img src={logoPokebola} alt="PokéFórum Logo" className="pokebola-png" />
+            <img src={logoPokebola} alt="PokeForum Logo" className="pokebola-png" />
             <span className="logo-texto">PokeForum</span>
           </div>
         </header>
@@ -75,11 +72,12 @@ function App() {
             />
             <Route
               path="/users"
-              element={currentUser && currentUser.profile === 'admin' ? <UserList currentUser={currentUser} /> : <Navigate to="/login" replace />}
+              element={currentUser && currentUser.profile === 'admin'
+                ? <UserList currentUser={currentUser} />
+                : <Navigate to="/login" replace />}
             />
           </Routes>
         </div>
-
       </div>
     </Router>
   );

@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import './UserProfileModal.css';
 
 function UserProfileModal({
   currentUser,
@@ -15,316 +16,107 @@ function UserProfileModal({
 }) {
   if (!selectedUserProfile) return null;
 
+  const isSelf = currentUser && currentUser.id === selectedUserProfile.id;
+  const isAdmin = currentUser && currentUser.profile === 'admin';
+  const isBanned = selectedUserProfile.state === 'banned';
+
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(5, 3, 10, 0.9)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 10000,
-        padding: "20px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          background: "#110c1c",
-          border: "1px solid #221834",
-          width: "100%",
-          maxWidth: "600px",
-          padding: "25px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
-          maxHeight: "85vh",
-          overflowY: "auto",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+    <div className="modal-overlay">
+      <div className="modal-card">
+
+        {/* Header */}
+        <div className="modal-header">
           <div>
-            <h2 style={{ color: "#ffffff", fontSize: "18px", margin: 0 }}>
-              {selectedUserProfile.username}
-            </h2>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "#888896",
-                margin: "4px 0 0 0",
-              }}
-            >
-              Profile: {selectedUserProfile.profile}
-            </p>
+            <h2 className="modal-username">{selectedUserProfile.username}</h2>
+            <p className="modal-user-role">Role: {selectedUserProfile.profile}</p>
           </div>
           <button
             className="refresh-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            style={{ padding: "5px 10px", fontSize: "12px" }}
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            style={{ padding: '5px 10px', fontSize: '12px' }}
           >
             Close
           </button>
         </div>
 
-        <hr
-          style={{ border: "none", borderTop: "1px solid #221834", margin: 0 }}
-        />
+        <hr className="modal-divider" />
 
-        {/* Admin Actions */}
-        {currentUser &&
-          currentUser.profile === "admin" &&
-          currentUser.id !== selectedUserProfile.id && (
-            <div
-              style={{ display: "flex", gap: "8px", flexDirection: "column" }}
+        {/* Admin: ban/unban button */}
+        {isAdmin && !isSelf && (
+          <div className="admin-actions">
+            <button
+              type="button"
+              className={`poll-submit-button ${isBanned ? 'ban-button-active' : 'ban-button-inactive'}`}
+              onClick={() => onBanUser(selectedUserProfile.id, selectedUserProfile.state)}
             >
-              <button
-                type="button"
-                className="poll-submit-button"
-                onClick={() =>
-                  onBanUser(selectedUserProfile.id, selectedUserProfile.state)
-                }
-                style={{
-                  background:
-                    selectedUserProfile.state === "banned"
-                      ? "#22cc22"
-                      : "#cc2222",
-                }}
-              >
-                {selectedUserProfile.state === "banned"
-                  ? "Unban User"
-                  : "Ban User"}
-              </button>
-            </div>
-          )}
-
-        {/* User Content */}
-        {currentUser && currentUser.profile === "admin" && (
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-          >
-            <h3
-              style={{
-                color: "#00f0ff",
-                fontSize: "12px",
-                letterSpacing: "1px",
-                margin: 0,
-              }}
-            >
-              USER CONTENT
-            </h3>
-
-            {/* User's Posts */}
-            <div>
-              <h4
-                style={{
-                  color: "#ffffff",
-                  fontSize: "11px",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                Posts
-              </h4>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {userContent?.posts && userContent.posts.length > 0 ? (
-                  userContent.posts.map((post) => (
-                    <div
-                      key={post.id}
-                      style={{
-                        padding: "8px",
-                        background: "#1a122c",
-                        border: "1px solid #221834",
-                        fontSize: "11px",
-                      }}
-                    >
-                      <p style={{ color: "#ffffff", margin: "0 0 4px 0" }}>
-                        {post.content}
-                      </p>
-                      {post.state === "deleted" && (
-                        <span style={{ color: "#ff6b6b" }}>[Deleted]</span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p style={{ color: "#555566", fontSize: "11px", margin: 0 }}>
-                    No posts
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* User's Comments */}
-            <div>
-              <h4
-                style={{
-                  color: "#ffffff",
-                  fontSize: "11px",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                Comments
-              </h4>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {userContent?.comments && userContent.comments.length > 0 ? (
-                  userContent.comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      style={{
-                        padding: "8px",
-                        background: "#1a122c",
-                        border: "1px solid #221834",
-                        fontSize: "11px",
-                      }}
-                    >
-                      <p style={{ color: "#ffffff", margin: "0 0 4px 0" }}>
-                        {comment.content}
-                      </p>
-                      {comment.state === "deleted" && (
-                        <span style={{ color: "#ff6b6b" }}>[Deleted]</span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p style={{ color: "#555566", fontSize: "11px", margin: 0 }}>
-                    No comments
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* User's Polls */}
-            <div>
-              <h4
-                style={{
-                  color: "#ffffff",
-                  fontSize: "11px",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                Polls
-              </h4>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {userContent?.polls && userContent.polls.length > 0 ? (
-                  userContent.polls.map((poll) => (
-                    <div
-                      key={poll.id}
-                      style={{
-                        padding: "8px",
-                        background: "#1a122c",
-                        border: "1px solid #221834",
-                        fontSize: "11px",
-                      }}
-                    >
-                      <p style={{ color: "#ffffff", margin: "0 0 4px 0" }}>
-                        {poll.name}
-                      </p>
-                      {poll.state === "deleted" && (
-                        <span style={{ color: "#ff6b6b" }}>[Deleted]</span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p style={{ color: "#555566", fontSize: "11px", margin: 0 }}>
-                    No polls
-                  </p>
-                )}
-              </div>
-            </div>
+              {isBanned ? 'Unban User' : 'Ban User'}
+            </button>
           </div>
         )}
 
-        <hr
-          style={{ border: "none", borderTop: "1px solid #221834", margin: 0 }}
-        />
+        {/* Admin: user content (posts, comments, polls) */}
+        {isAdmin && (
+          <div className="user-content-section">
+            <h3 className="user-content-title">USER CONTENT</h3>
 
-        {/* Direct Message */}
+            <ContentSubsection title="Posts" items={userContent?.posts} getLabel={item => item.content} />
+            <ContentSubsection title="Comments" items={userContent?.comments} getLabel={item => item.content} />
+            <ContentSubsection title="Polls" items={userContent?.polls} getLabel={item => item.name} />
+          </div>
+        )}
+
+        <hr className="modal-divider" />
+
+        {/* Direct message form */}
         {currentUser ? (
-          currentUser.id !== selectedUserProfile.id ? (
-            <form
-              onSubmit={onSendMessage}
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
+          isSelf ? (
+            <p className="modal-note">You cannot message yourself</p>
+          ) : (
+            <form className="dm-form" onSubmit={onSendMessage}>
               <textarea
+                className="dm-textarea"
                 placeholder="Write your message..."
                 value={directMessage}
-                onChange={(event) => onSetDirectMessage(event.target.value)}
-                className="home-search-input"
-                style={{
-                  background: "#1a122c",
-                  border: "1px solid #221834",
-                  padding: "10px 12px",
-                  color: "#ffffff",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  minHeight: "80px",
-                  resize: "vertical",
-                }}
+                onChange={(e) => onSetDirectMessage(e.target.value)}
                 disabled={messageSending}
               />
               <button
                 type="submit"
                 className="poll-submit-button"
-                style={{ width: "100%" }}
+                style={{ width: '100%' }}
                 disabled={messageSending}
               >
-                {messageSending ? "Sending..." : "Send message"}
+                {messageSending ? 'Sending...' : 'Send message'}
               </button>
-              {messageError && (
-                <p style={{ fontSize: "11px", color: "#ff6b6b", margin: 0 }}>
-                  {messageError}
-                </p>
-              )}
-              {messageSuccess && (
-                <p style={{ fontSize: "11px", color: "#00ff66", margin: 0 }}>
-                  {messageSuccess}
-                </p>
-              )}
+              {messageError && <p className="form-error">{messageError}</p>}
+              {messageSuccess && <p className="form-success">{messageSuccess}</p>}
             </form>
-          ) : (
-            <p style={{ fontSize: "12px", color: "#888896", margin: 0 }}>
-              You cannot message yourself
-            </p>
           )
         ) : (
-          <p style={{ fontSize: "12px", color: "#888896", margin: 0 }}>
-            Register or login to send messages
-          </p>
+          <p className="modal-note">Register or login to send messages</p>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+function ContentSubsection({ title, items, getLabel }) {
+  return (
+    <div className="content-subsection">
+      <h4 className="content-subsection-title">{title}</h4>
+      <div className="content-section-list">
+        {items && items.length > 0 ? (
+          items.map(item => (
+            <div key={item.id} className="content-item-card">
+              <p>{getLabel(item)}</p>
+              {item.state === 'deleted' && (
+                <span className="content-item-deleted">[Deleted]</span>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="content-empty-text">No {title.toLowerCase()}</p>
         )}
       </div>
     </div>

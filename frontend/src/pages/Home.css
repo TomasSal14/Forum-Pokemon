@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. ESTRUTURA DE COLUNAS (GRELHA PRINCIPAL DA HOME)
+   1. MAIN LAYOUT COLUMNS
    ========================================================================== */
 .home-layout-grid {
   display: flex;
@@ -30,7 +30,7 @@
 }
 
 /* ==========================================================================
-   2. SECÇÃO DAS BOARDS (CARROSSEL COM SCROLL NATIVO)
+   2. BOARDS CAROUSEL (horizontal scroll)
    ========================================================================== */
 .boards-carousel-wrapper {
   position: relative;
@@ -40,8 +40,8 @@
 .boards-row {
   display: flex;
   gap: 15px;
-  flex-wrap: nowrap; 
-  overflow-x: auto;  
+  flex-wrap: nowrap;
+  overflow-x: auto;
   padding-bottom: 15px;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .boards-row::-webkit-scrollbar-track {
-  background: #110c1c; 
+  background: #110c1c;
 }
 
 .boards-row::-webkit-scrollbar-thumb {
@@ -59,29 +59,27 @@
 }
 
 .board-box {
-  flex: 0 0 calc(25% - 12px); 
-  min-width: 180px; 
-  background: #110c1c; 
+  flex: 0 0 calc(25% - 12px);
+  min-width: 180px;
+  background: #110c1c;
   border: 1px solid #221834;
-  border-radius: 0px; 
-  padding: 15px; 
+  border-radius: 0px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  justify-content: center; 
-  height: 100px; 
-  transition: none; 
+  justify-content: center;
+  height: 100px;
+  transition: none;
   box-sizing: border-box;
   outline: none;
 }
 
-/* SIMPLIFICADO: Hovers neutros sem duplicar código com !important */
 .board-box:hover,
 .board-box:active,
 .board-box:focus {
-  border-color: #00f0ff; /* Dá um feedback visual suave ao passar o rato */
+  border-color: #00f0ff;
 }
 
-/* SINCRO: Garante que se houver filtro ativo na Home, a caixa acende */
 .board-box.active {
   background: #1a122c;
   border-color: #00f0ff;
@@ -103,12 +101,12 @@
 }
 
 /* ==========================================================================
-   3. ACTIVE POLLS (CAIXA DE VOTAÇÕES)
+   3. POLLS
    ========================================================================== */
 .polls-box-placeholder {
-  background: #110c1c; 
+  background: #110c1c;
   border: 1px solid #221834;
-  border-radius: 0px; 
+  border-radius: 0px;
   padding: 22px 20px;
   box-sizing: border-box;
 }
@@ -144,7 +142,7 @@
 .poll-bar-bg {
   width: 100%;
   height: 6px;
-  background: #1a122c; 
+  background: #1a122c;
   overflow: hidden;
 }
 
@@ -181,11 +179,11 @@
 
 .poll-submit-button {
   width: 100%;
-  background: #1a122c; 
-  border: 1px solid #221834; 
-  color: #ffffff; 
+  background: #1a122c;
+  border: 1px solid #221834;
+  color: #ffffff;
   padding: 8px 0;
-  border-radius: 0px; 
+  border-radius: 0px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -199,19 +197,19 @@
 }
 
 /* ==========================================================================
-   4. LISTA DE POSTS RECENTES
-   ========================================================================= */
+   4. RECENT POSTS LIST
+   ========================================================================== */
 .posts-list-container {
   display: flex;
   flex-direction: column;
-  gap: 12px; 
+  gap: 12px;
   width: 100%;
 }
 
 .post-list-item {
-  background: #110c1c; 
+  background: #110c1c;
   border: 1px solid #221834;
-  border-radius: 0px; 
+  border-radius: 0px;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
@@ -219,7 +217,7 @@
 }
 
 .post-list-item:hover {
-  border-color: #2979ff; /* Acende ligeiramente ao passar o rato para dar feedback de clique */
+  border-color: #2979ff;
 }
 
 .post-main-info {
@@ -264,11 +262,11 @@
   font-size: 12px;
   color: #888896;
   font-weight: 600;
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 /* ==========================================================================
-   5. CABEÇALHOS E BOTÃO DE REFRESH / VER TODOS
+   5. SECTION HEADERS AND REFRESH BUTTON
    ========================================================================== */
 .section-header-with-action {
   display: flex;
@@ -287,14 +285,14 @@
 }
 
 .refresh-button {
-  background: #1a122c; 
+  background: #1a122c;
   border: 1px solid #221834;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   padding: 6px 12px;
-  border-radius: 0px; 
+  border-radius: 0px;
   outline: none;
 }
 
@@ -305,17 +303,17 @@
 }
 
 /* ==========================================================================
-   6. CONTAINER DA BARRA DE PESQUISA NA HOME
+   6. SEARCH BAR
    ========================================================================== */
 .home-search-container {
   display: flex;
   align-items: center;
-  background: #110c1c; 
+  background: #110c1c;
   border: 1px solid #221834;
-  border-radius: 0px; 
+  border-radius: 0px;
   padding: 10px 15px;
   width: 100%;
-  max-width: 200px; 
+  max-width: 200px;
   box-sizing: border-box;
   margin-bottom: 10px;
   -webkit-tap-highlight-color: transparent;
@@ -343,4 +341,60 @@
 
 .home-search-input::placeholder {
   color: #555566;
+}
+
+/* ==========================================================================
+   7. USER LIST PAGE
+   ========================================================================== */
+.user-list-layout {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.user-list-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-list-item {
+  padding: 12px;
+  background: #110c1c;
+  border: 1px solid #221834;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-list-item:hover {
+  border-color: #00f0ff;
+}
+
+.user-list-name {
+  color: #00f0ff;
+  margin: 0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.user-list-meta {
+  color: #888896;
+  margin: 2px 0 0 0;
+  font-size: 11px;
+}
+
+.admin-required {
+  padding: 20px;
+  color: #ff6b6b;
 }

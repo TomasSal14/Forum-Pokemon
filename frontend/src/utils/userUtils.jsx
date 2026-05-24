@@ -1,14 +1,16 @@
 import React from 'react';
 
-export const renderUsername = (userId, username, onClickHandler, className = '') => (
-  <span
-    onClick={(e) => {
-      e.stopPropagation();
-      onClickHandler(userId, username);
-    }}
-    style={{ cursor: 'pointer', color: '#00f0ff', textDecoration: 'underline', fontWeight: 600 }}
-    className={className}
-  >
-    {username}
-  </span>
-);
+function ClickableUsername({ userId, username, onClick, className = '' }) {
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onClick(userId, username);
+  };
+
+  return (
+    <span onClick={handleClick} className={`clickable-username ${className}`}>
+      {username}
+    </span>
+  );
+}
+
+export default ClickableUsername;

@@ -7,7 +7,7 @@
   box-sizing: border-box;
 }
 
-/* 1. BARRA LATERAL DE CONVERSAS PRIVADAS */
+/* 1. LEFT SIDEBAR — USER LIST */
 .chat-sidebar-members {
   width: 240px;
   border-right: 1px solid #221834;
@@ -40,9 +40,9 @@
   border-radius: 0px;
   border: 1px solid transparent;
   transition: background 0.2s ease;
+  cursor: pointer;
 }
 
-/* Destaca a caixa da conversa selecionada */
 .chat-user-item.active {
   background: #1a122c;
   border-color: #221834;
@@ -54,24 +54,22 @@
   border-radius: 50%;
 }
 
-.status-dot.online { 
-  background: #00ff66; 
+.status-dot.online {
+  background: #00ff66;
 }
 
-/* CORRIGIDO: Nomes começam com cinzento discreto integrado no tema */
 .chat-user-name {
   font-weight: 600;
   font-size: 13px;
   color: #aaaab8;
 }
 
-/* CORRIGIDO: O nome acende a branco puro no hover ou quando ativo */
 .chat-user-item:hover .chat-user-name,
 .chat-user-item.active .chat-user-name {
   color: #ffffff;
 }
 
-/* 2. ÁREA DA CONVERSA DIREITA */
+/* 2. RIGHT AREA — ACTIVE CONVERSATION */
 .chat-main-area {
   flex: 1;
   display: flex;
@@ -83,6 +81,10 @@
   padding: 15px 20px;
   border-bottom: 1px solid #221834;
   text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .chat-header-title h2 {
@@ -113,7 +115,6 @@
   text-align: left;
 }
 
-/* Alinhamento visual para as tuas próprias mensagens */
 .chat-message-bubble.me {
   border-left: 2px solid #00f0ff;
   padding-left: 10px;
@@ -143,7 +144,7 @@
   line-height: 1.4;
 }
 
-/* CAMPO DE INPUT FIXADO EM BAIXO */
+/* 3. INPUT AREA (pinned to bottom) */
 .chat-input-form {
   padding: 20px;
   display: flex;
@@ -179,4 +180,11 @@
 
 .chat-send-button:hover {
   background: #221834;
+}
+
+/* 4. EMPTY STATE TEXT */
+.chat-empty-text {
+  color: #888896;
+  font-size: 12px;
+  margin: 0;
 }
