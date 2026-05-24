@@ -245,6 +245,28 @@ function Boards({ currentUser }) {
     setMessageSuccess('');
   };
 
+  const handleChangeRole = async (userId, newRole) => {
+    if (!currentUser || currentUser.profile !== 'admin') return;
+    try {
+      const response = await fetch(
+        `${API_BASE}/users/${userId}/role/?admin_profile=${currentUser.profile}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setSelectedUserProfile(updatedUser);
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+        setBoardMembers(prev => prev.map(m => m.id === updatedUser.id ? updatedUser : m));
+      }
+    } catch (err) {
+      console.error('Error changing role:', err);
+    }
+  };
+
   const handleBanUser = async (userId, userState) => {
     if (!currentUser) return;
     try {
@@ -364,6 +386,9 @@ function Boards({ currentUser }) {
       const data = await response.json();
       if (!response.ok) { setCommentError('Error sending comment.'); return; }
       setComments([...comments, data]);
+      setPosts(prev => prev.map(p =>
+        p.id === selectedPost.id ? { ...p, comment_count: (p.comment_count ?? 0) + 1 } : p
+      ));
       setCommentText('');
       setReplyToCommentId(null);
     } catch {
@@ -618,7 +643,7 @@ function Boards({ currentUser }) {
                   </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
-                  <div className="post-stats"><span>💬 0</span></div>
+                  <div className="post-stats"><span>💬 {post.comment_count ?? 0}</span></div>
                   {canModerate(currentUser, post.creator) && (
                     <button
                       type="button"
@@ -789,6 +814,7 @@ function Boards({ currentUser }) {
         onSetDirectMessage={setDirectMessage}
         onSendMessage={handleSendDirectMessage}
         onBanUser={handleBanUser}
+        onChangeRole={handleChangeRole}
       />
     </div>
   );

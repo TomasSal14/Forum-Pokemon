@@ -22,10 +22,14 @@ class BoardSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     creator_username = serializers.CharField(source='creator.username', read_only=True)
+    comment_count = serializers.SerializerMethodField()
 
     class Meta:
         model  = Post
         fields = '__all__'
+
+    def get_comment_count(self, obj):
+        return obj.comments.filter(state='active').count()
 
 
 class CommentSerializer(serializers.ModelSerializer):

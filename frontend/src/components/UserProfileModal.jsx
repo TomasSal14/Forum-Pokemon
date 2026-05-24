@@ -13,12 +13,15 @@ function UserProfileModal({
   onSetDirectMessage,
   onSendMessage,
   onBanUser,
+  onChangeRole,
 }) {
   if (!selectedUserProfile) return null;
 
   const isSelf = currentUser && currentUser.id === selectedUserProfile.id;
   const isAdmin = currentUser && currentUser.profile === 'admin';
   const isBanned = selectedUserProfile.state === 'banned';
+  const isMod = selectedUserProfile.profile === 'mod';
+  const isTargetAdmin = selectedUserProfile.profile === 'admin';
 
   return (
     <div className="modal-overlay">
@@ -41,8 +44,8 @@ function UserProfileModal({
 
         <hr className="modal-divider" />
 
-        {/* Admin: ban/unban button */}
-        {isAdmin && !isSelf && (
+        {/* Admin actions: ban/unban + role change */}
+        {isAdmin && !isSelf && !isTargetAdmin && (
           <div className="admin-actions">
             <button
               type="button"
@@ -50,6 +53,13 @@ function UserProfileModal({
               onClick={() => onBanUser(selectedUserProfile.id, selectedUserProfile.state)}
             >
               {isBanned ? 'Unban User' : 'Ban User'}
+            </button>
+            <button
+              type="button"
+              className={`poll-submit-button ${isMod ? 'ban-button-active' : 'role-button-promote'}`}
+              onClick={() => onChangeRole(selectedUserProfile.id, isMod ? 'user' : 'mod')}
+            >
+              {isMod ? 'Remove Mod' : 'Make Moderator'}
             </button>
           </div>
         )}

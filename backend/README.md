@@ -1,42 +1,50 @@
-# Pokeforum — Backend (Django)
+# PokeForum — Backend (Django)
 
-## Requisitos
+## Requirements
 
 - Python 3.12+
 
-## Instalação
+## Setup
 
-**1. Criar e ativar o ambiente virtual**
-```
-python/py -m venv venv
-source venv\Scripts\activate
+**1. Create and activate the virtual environment**
+
+macOS / Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-**2. Instalar dependências**
+Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
 ```
+
+**2. Install dependencies**
+```bash
 pip install -r requirements.txt
 ```
 
-**3. Criar a base de dados**
-```
-python/py manage.py makemigrations
-python/py manage.py migrate
-```
-
-**4. Criar utilizador administrador**
-```
-python/py manage.py createsuperuser
+**3. Apply database migrations**
+```bash
+python manage.py makemigrations
+python manage.py migrate
 ```
 
-**5. (Opcional) Popular com dados de teste**
-```
-python/py manage.py create_test_data
-```
-
-**6. Arrancar o servidor**
-```
-python/py manage.py runserver
+**4. Create an admin user**
+```bash
+python manage.py createsuperuser
 ```
 
-O servidor fica disponível em `http://127.0.0.1:8000/`  
-O backoffice fica disponível em `http://127.0.0.1:8000/admin/`
+**5. (Optional) Populate with test data**
+```bash
+python manage.py create_test_data
+```
+
+**6. Start the server**
+```bash
+python manage.py runserver
+```
+
+The API is available at `http://127.0.0.1:8000/api/`  
+The Django admin panel is available at `http://127.0.0.1:8000/admin/`

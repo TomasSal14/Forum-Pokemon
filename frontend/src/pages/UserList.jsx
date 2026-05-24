@@ -50,6 +50,27 @@ function UserList({ currentUser }) {
     setMessageSuccess('');
   };
 
+  const handleChangeRole = async (userId, newRole) => {
+    if (!currentUser || currentUser.profile !== 'admin') return;
+    try {
+      const response = await fetch(
+        `${API_BASE}/users/${userId}/role/?admin_profile=${currentUser.profile}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setSelectedUserProfile(updatedUser);
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+      }
+    } catch (err) {
+      console.error('Error changing role:', err);
+    }
+  };
+
   const handleBanUser = async (userId, userState) => {
     if (!currentUser || currentUser.profile !== 'admin') return;
     try {
@@ -139,6 +160,7 @@ function UserList({ currentUser }) {
         onSetDirectMessage={setDirectMessage}
         onSendMessage={handleSendDirectMessage}
         onBanUser={handleBanUser}
+        onChangeRole={handleChangeRole}
       />
     </div>
   );

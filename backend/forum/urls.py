@@ -6,6 +6,7 @@ urlpatterns = [
     path('users/<int:pk>/',           views.user_detail,     name='user-detail'),
     path('users/<int:pk>/content/',   views.user_content,    name='user-content'),
     path('users/<int:pk>/ban/',       views.user_ban,        name='user-ban'),
+    path('users/<int:pk>/role/',      views.user_role,       name='user-role'),
     path('users/admin/list/',         views.users_admin_list, name='users-admin-list'),
 
     path('boards/',                   views.boards_list,     name='boards-list'),

@@ -31,6 +31,10 @@
   background: #cc2222 !important;
 }
 
+.role-button-promote {
+  background: #7c3aed !important;
+}
+
 /* User content section */
 .user-content-section {
   display: flex;

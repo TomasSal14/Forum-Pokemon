@@ -83,6 +83,30 @@ def user_content(request, pk):
 
 
 @api_view(['PUT'])
+def user_role(request, pk):
+    """Promote a user to mod or demote back to user. Admin only."""
+    denied = require_admin(request)
+    if denied:
+        return denied
+
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if user.profile == 'admin':
+        return Response({'error': 'Cannot change admin role'}, status=status.HTTP_403_FORBIDDEN)
+
+    role = request.data.get('role')
+    if role not in ('user', 'mod'):
+        return Response({'error': 'Role must be user or mod'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.profile = role
+    user.save()
+    return Response(UserSerializer(user).data)
+
+
+@api_view(['PUT'])
 def user_ban(request, pk):
     """Ban or unban a user. Admin only."""
     denied = require_admin(request)

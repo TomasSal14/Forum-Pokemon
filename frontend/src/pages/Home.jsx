@@ -269,6 +269,26 @@ function Home({ currentUser }) {
     }
   };
 
+  const handleChangeRole = async (userId, newRole) => {
+    if (!currentUser || currentUser.profile !== 'admin') return;
+    try {
+      const response = await fetch(
+        `${API_BASE}/users/${userId}/role/?admin_profile=${currentUser.profile}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole }),
+        }
+      );
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setSelectedUserProfile(updatedUser);
+      }
+    } catch (err) {
+      console.error('Error changing role:', err);
+    }
+  };
+
   return (
     <div className="home-layout-grid">
       <div className="left-content-column">
@@ -355,6 +375,7 @@ function Home({ currentUser }) {
         onSetDirectMessage={setDirectMessage}
         onSendMessage={handleSendDirectMessage}
         onBanUser={handleBanUser}
+        onChangeRole={handleChangeRole}
       />
     </div>
   );

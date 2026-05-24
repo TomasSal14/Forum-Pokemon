@@ -58,7 +58,7 @@ function PostsSection({ posts, boards, currentUser, searchQuery, id, onSelectPos
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
-            <div className="post-stats"><span>💬 0</span></div>
+            <div className="post-stats"><span>💬 {post.comment_count ?? 0}</span></div>
             {canModerate(currentUser, post.creator) && (
               <button
                 type="button"
