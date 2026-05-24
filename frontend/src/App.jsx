@@ -68,7 +68,7 @@ function App() {
             />
             <Route
               path="/profile"
-              element={currentUser ? <Profile currentUser={currentUser} /> : <Navigate to="/login" replace />}
+              element={currentUser ? <Profile currentUser={currentUser} onLogout={handleLogout} /> : <Navigate to="/login" replace />}
             />
             <Route
               path="/users"

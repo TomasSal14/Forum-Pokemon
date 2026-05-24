@@ -45,14 +45,25 @@ def users_list(request):
     return Response(serializer.data)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'DELETE'])
 def user_detail(request, pk):
     try:
         user = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    serializer = UserSerializer(user)
-    return Response(serializer.data)
+
+    if request.method == 'GET':
+        return Response(UserSerializer(user).data)
+
+    # DELETE — soft delete own account
+    requester_id = request.query_params.get('user_id')
+    if not requester_id or int(requester_id) != pk:
+        return Response({'error': 'You can only delete your own account'}, status=status.HTTP_403_FORBIDDEN)
+
+    user.state = 'deleted'
+    user.is_active = False
+    user.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
