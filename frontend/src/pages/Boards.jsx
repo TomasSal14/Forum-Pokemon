@@ -348,14 +348,13 @@ function Boards({ currentUser }) {
   const handleCommentSubmit = async (event) => {
     event.preventDefault();
     setCommentError('');
-    if (!currentUser) { setCommentError('Login to comment.'); return; }
     if (!commentText.trim() || !selectedPost) return;
     try {
       const response = await fetch(`${API_BASE}/posts/${selectedPost.id}/comments/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user: currentUser.id,
+          user: currentUser ? currentUser.id : null,
           post: selectedPost.id,
           board: selectedPost.board,
           content: commentText,
@@ -706,7 +705,7 @@ function Boards({ currentUser }) {
                         <p style={{ fontSize: '12px', color: '#666677', margin: '0 0 4px 0' }}>
                           <ClickableUsername
                             userId={comment.user}
-                            username={comment.user_username || `User ${comment.user}`}
+                            username={comment.user_username || 'Anonymous'}
                             onClick={handleOpenUserProfile}
                           />
                           {' • '}
@@ -764,14 +763,13 @@ function Boards({ currentUser }) {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input
                   type="text"
-                  placeholder={currentUser ? 'Write a comment...' : 'Login to comment'}
+                  placeholder={currentUser ? 'Write a comment...' : 'Write a comment as Anonymous...'}
                   className="home-search-input"
                   style={{ background: '#110c1c', border: '1px solid #221834', padding: '10px 15px' }}
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
-                  disabled={!currentUser}
                 />
-                <button className="refresh-button" disabled={!currentUser}>Post</button>
+                <button className="refresh-button">Post</button>
               </div>
             </form>
             {commentError && <p className="form-error">{commentError}</p>}

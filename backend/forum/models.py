@@ -85,7 +85,7 @@ class Comment(models.Model):
         ('deleted', 'Deleted'),
     ]
 
-    user           = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    user           = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='comments')
     post           = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     board          = models.ForeignKey(Board, on_delete=models.CASCADE, related_name='comments')
     content        = models.TextField()
@@ -94,7 +94,8 @@ class Comment(models.Model):
     creation_date  = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f'Comment by {self.user} on {self.post}'
+        author = self.user.username if self.user_id else 'Anonymous'
+        return f'Comment by {author} on {self.post}'
 
 
 class Poll(models.Model):

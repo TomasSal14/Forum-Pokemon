@@ -29,11 +29,14 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user_username = serializers.CharField(source='user.username', read_only=True)
+    user_username = serializers.SerializerMethodField()
 
     class Meta:
         model  = Comment
         fields = '__all__'
+
+    def get_user_username(self, obj):
+        return obj.user.username if obj.user_id else 'Anonymous'
 
 
 class PollOptionSerializer(serializers.ModelSerializer):
