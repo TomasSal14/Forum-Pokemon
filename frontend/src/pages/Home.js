@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'; 
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import './Home.css';
-import BoardsSection from '../components/BoardsSection';
-import PostsSection from '../components/PostsSection';
-import PollsSection from '../components/PollsSection';
-import UserProfileModal from '../components/UserProfileModal';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import "./Home.css";
+import BoardsSection from "../components/BoardsSection";
+import PostsSection from "../components/PostsSection";
+import PollsSection from "../components/PollsSection";
+import UserProfileModal from "../components/UserProfileModal";
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = "http://127.0.0.1:8000/api";
 
 function Home({ currentUser }) {
   const { id } = useParams();
@@ -15,25 +15,25 @@ function Home({ currentUser }) {
   const [boards, setBoards] = useState([]);
   const [posts, setPosts] = useState([]);
   const [polls, setPolls] = useState([]);
-  
+
   // Poll creation states
-  const [pollName, setPollName] = useState('');
-  const [pollOptions, setPollOptions] = useState(['', '']);
-  const [pollError, setPollError] = useState('');
+  const [pollName, setPollName] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [pollError, setPollError] = useState("");
   const [pollCreating, setPollCreating] = useState(false);
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [pollSelections, setPollSelections] = useState({});
-  
+
   // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
   // User profile modal states
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
   const [userContent, setUserContent] = useState(null);
-  const [directMessage, setDirectMessage] = useState('');
+  const [directMessage, setDirectMessage] = useState("");
   const [messageSending, setMessageSending] = useState(false);
-  const [messageError, setMessageError] = useState('');
-  const [messageSuccess, setMessageSuccess] = useState('');
+  const [messageError, setMessageError] = useState("");
+  const [messageSuccess, setMessageSuccess] = useState("");
 
   const refreshPolls = async () => {
     try {
@@ -53,7 +53,7 @@ function Home({ currentUser }) {
         return next;
       });
     } catch (error) {
-      console.error('Error loading polls:', error);
+      console.error("Error loading polls:", error);
     }
   };
 
@@ -65,7 +65,7 @@ function Home({ currentUser }) {
           : `${API_BASE}/boards/`;
         const [boardsResponse, postsResponse] = await Promise.all([
           fetch(boardsUrl),
-          fetch(`${API_BASE}/posts/`)
+          fetch(`${API_BASE}/posts/`),
         ]);
 
         const boardsData = await boardsResponse.json();
@@ -75,7 +75,7 @@ function Home({ currentUser }) {
         setPosts(postsData);
         await refreshPolls();
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
       }
     }
 
@@ -83,11 +83,13 @@ function Home({ currentUser }) {
   }, [currentUser]);
 
   useEffect(() => {
-    if (selectedUserProfile && currentUser && currentUser.profile === 'admin') {
-      fetch(`${API_BASE}/users/${selectedUserProfile.id}/content/?admin_id=${currentUser.id}`)
-        .then(res => res.json())
-        .then(data => setUserContent(data))
-        .catch(err => console.error('Error loading user content:', err));
+    if (selectedUserProfile && currentUser && currentUser.profile === "admin") {
+      fetch(
+        `${API_BASE}/users/${selectedUserProfile.id}/content/?admin_id=${currentUser.id}`,
+      )
+        .then((res) => res.json())
+        .then((data) => setUserContent(data))
+        .catch((err) => console.error("Error loading user content:", err));
     }
   }, [selectedUserProfile, currentUser]);
 
@@ -97,13 +99,16 @@ function Home({ currentUser }) {
     event.stopPropagation();
     if (!currentUser) return;
     try {
-      const response = await fetch(`${API_BASE}/boards/${boardId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `${API_BASE}/boards/${boardId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) return;
       setBoards((prev) => prev.filter((board) => board.id !== boardId));
     } catch (error) {
-      console.error('Error deleting board:', error);
+      console.error("Error deleting board:", error);
     }
   };
 
@@ -112,13 +117,16 @@ function Home({ currentUser }) {
     event.stopPropagation();
     if (!currentUser) return;
     try {
-      const response = await fetch(`${API_BASE}/posts/${postId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `${API_BASE}/posts/${postId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) return;
       setPosts((prev) => prev.filter((post) => post.id !== postId));
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error("Error deleting post:", error);
     }
   };
 
@@ -127,13 +135,16 @@ function Home({ currentUser }) {
     event.stopPropagation();
     if (!currentUser) return;
     try {
-      const response = await fetch(`${API_BASE}/polls/${pollId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `${API_BASE}/polls/${pollId}/?user_id=${currentUser.id}&user_profile=${currentUser.profile}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) return;
       setPolls((prev) => prev.filter((poll) => poll.id !== pollId));
     } catch (error) {
-      console.error('Error deleting poll:', error);
+      console.error("Error deleting poll:", error);
     }
   };
 
@@ -141,88 +152,90 @@ function Home({ currentUser }) {
     if (!currentUser) return;
     try {
       const response = await fetch(`${API_BASE}/polls/${pollId}/close/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUser.id })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.id }),
       });
       if (!response.ok) return;
       await refreshPolls();
     } catch (error) {
-      console.error('Error closing poll:', error);
+      console.error("Error closing poll:", error);
     }
   };
 
   const handleVote = async (pollId, pollState) => {
-    if (pollState !== 'open' || !currentUser) return;
+    if (pollState !== "open" || !currentUser) return;
     const selectedOption = pollSelections[pollId];
     if (!selectedOption) return;
     try {
       const response = await fetch(`${API_BASE}/polls/${pollId}/vote/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           poll: pollId,
           poll_option: selectedOption,
-          user: currentUser.id
-        })
+          user: currentUser.id,
+        }),
       });
       if (!response.ok) return;
       await refreshPolls();
     } catch (error) {
-      console.error('Error voting:', error);
+      console.error("Error voting:", error);
     }
   };
 
   const handleCreatePoll = async (event) => {
     event.preventDefault();
-    setPollError('');
+    setPollError("");
     if (!currentUser) {
-      setPollError('Login to create a poll.');
+      setPollError("Login to create a poll.");
       return;
     }
     const trimmedName = pollName.trim();
     const cleanedOptions = pollOptions.map((opt) => opt.trim()).filter(Boolean);
     if (!trimmedName) {
-      setPollError('Poll name is required.');
+      setPollError("Poll name is required.");
       return;
     }
     if (cleanedOptions.length < 2) {
-      setPollError('Add at least 2 options.');
+      setPollError("Add at least 2 options.");
       return;
     }
     try {
       setPollCreating(true);
       const response = await fetch(`${API_BASE}/polls/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: trimmedName,
           creator: currentUser.id,
-          options: cleanedOptions.map((label) => ({ label }))
-        })
+          options: cleanedOptions.map((label) => ({ label })),
+        }),
       });
-      const data = await response.json();
+
       if (!response.ok) {
-        setPollError('Error creating poll.');
+        setPollError("Error creating poll.");
         return;
       }
-      setPollName('');
-      setPollOptions(['', '']);
+      setPollName("");
+      setPollOptions(["", ""]);
       setShowPollCreator(false);
       await refreshPolls();
     } catch (error) {
-      setPollError('Network error creating poll.');
+      setPollError("Network error creating poll.");
     } finally {
       setPollCreating(false);
     }
   };
 
   const handleAddOption = () => {
-    setPollOptions((prev) => [...prev, '']);
+    setPollOptions((prev) => [...prev, ""]);
   };
 
   const handleOptionChange = (index, value) => {
-    setPollOptions((prev) => prev.map((option, i) => (i === index ? value : option)));
+    setPollOptions((prev) =>
+      prev.map((option, i) => (i === index ? value : option)),
+    );
   };
 
   const handleOpenUserProfile = async (userId, username) => {
@@ -237,62 +250,67 @@ function Home({ currentUser }) {
     } catch (err) {
       setSelectedUserProfile({ id: userId, username: username });
     }
-    setDirectMessage('');
-    setMessageError('');
-    setMessageSuccess('');
+    setDirectMessage("");
+    setMessageError("");
+    setMessageSuccess("");
   };
 
   const handleSendDirectMessage = async (event) => {
     event.preventDefault();
-    setMessageError('');
-    setMessageSuccess('');
+    setMessageError("");
+    setMessageSuccess("");
     if (!currentUser) {
-      setMessageError('Login to send messages.');
+      setMessageError("Login to send messages.");
       return;
     }
     if (!selectedUserProfile || !directMessage.trim()) {
-      setMessageError('Write a message.');
+      setMessageError("Write a message.");
       return;
     }
     try {
       setMessageSending(true);
       const response = await fetch(`${API_BASE}/messages/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_sent_it: currentUser.id,
           user_receiver: selectedUserProfile.id,
-          content: directMessage
-        })
+          content: directMessage,
+        }),
       });
       if (!response.ok) {
-        setMessageError('Error sending message.');
+        setMessageError("Error sending message.");
         return;
       }
-      setMessageSuccess('Message sent!');
-      setDirectMessage('');
+      setMessageSuccess("Message sent!");
+      setDirectMessage("");
       setTimeout(() => setSelectedUserProfile(null), 1500);
     } catch (error) {
-      setMessageError('Network error sending message.');
+      setMessageError("Network error sending message.");
     } finally {
       setMessageSending(false);
     }
   };
 
   const handleBanUser = async (userId, userState) => {
-    if (!currentUser || currentUser.profile !== 'admin') return;
+    if (!currentUser || currentUser.profile !== "admin") return;
     try {
-      const response = await fetch(`${API_BASE}/users/${userId}/ban/?admin_id=${currentUser.id}&admin_profile=${currentUser.profile}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: userState === 'banned' ? 'unban' : 'ban' })
-      });
+      const response = await fetch(
+        `${API_BASE}/users/${userId}/ban/?admin_id=${currentUser.id}&admin_profile=${currentUser.profile}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: userState === "banned" ? "unban" : "ban",
+          }),
+        },
+      );
       if (response.ok) {
         const data = await response.json();
         setSelectedUserProfile(data);
       }
     } catch (err) {
-      console.error('Error banning user:', err);
+      console.error("Error banning user:", err);
     }
   };
 
@@ -301,30 +319,40 @@ function Home({ currentUser }) {
       <div className="left-content-column">
         <div className="home-search-container">
           <span className="home-search-icon">🔍</span>
-          <input 
-            type="text" 
-            placeholder="Search" 
+          <input
+            type="text"
+            placeholder="Search"
             className="home-search-input"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
         </div>
-        
-        <div className="section-header-with-action" style={{ marginTop: '20px' }}>
+
+        <div
+          className="section-header-with-action"
+          style={{ marginTop: "20px" }}
+        >
           <h2>BOARDS</h2>
         </div>
 
-        <BoardsSection 
-          boards={boards} 
-          currentUser={currentUser} 
+        <BoardsSection
+          boards={boards}
+          currentUser={currentUser}
           searchQuery={searchQuery}
           onDeleteBoard={handleDeleteBoard}
         />
 
-        <div className="section-header-with-action" style={{ marginTop: '40px' }}>
+        <div
+          className="section-header-with-action"
+          style={{ marginTop: "40px" }}
+        >
           <h2>{id ? "POSTS" : "RECENT POSTS"}</h2>
           {id && (
-            <Link to="/" className="refresh-button" style={{ textDecoration: 'none', textAlign: 'center' }}>
+            <Link
+              to="/"
+              className="refresh-button"
+              style={{ textDecoration: "none", textAlign: "center" }}
+            >
               Ver Todos
             </Link>
           )}
@@ -336,7 +364,11 @@ function Home({ currentUser }) {
           currentUser={currentUser}
           searchQuery={searchQuery}
           id={id}
-          onSelectPost={(post) => navigate(`/boards/${post.board}`, { state: { openPostId: post.id } })}
+          onSelectPost={(post) =>
+            navigate(`/boards/${post.board}`, {
+              state: { openPostId: post.id },
+            })
+          }
           onDeletePost={handleDeletePost}
           onOpenUserProfile={handleOpenUserProfile}
         />
@@ -354,7 +386,9 @@ function Home({ currentUser }) {
           onVote={handleVote}
           onClosePoll={handleClosePoll}
           onDeletePoll={handleDeletePoll}
-          onSelectOption={(pollId, optionId) => setPollSelections((prev) => ({ ...prev, [pollId]: optionId }))}
+          onSelectOption={(pollId, optionId) =>
+            setPollSelections((prev) => ({ ...prev, [pollId]: optionId }))
+          }
           showPollCreator={showPollCreator}
           pollName={pollName}
           pollOptions={pollOptions}

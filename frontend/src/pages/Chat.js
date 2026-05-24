@@ -35,7 +35,7 @@ function Chat({ currentUser }) {
     }
 
     loadUsers();
-  }, [currentUser]);
+  }, [currentUser, activeUser]);
 
   const loadMessages = async () => {
     if (!currentUser) {
