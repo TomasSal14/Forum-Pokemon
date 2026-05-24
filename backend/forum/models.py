@@ -138,15 +138,14 @@ class PollAnswer(models.Model):
 
 class Message(models.Model):
     STATE_CHOICES = [
-        ('unread', 'Unread'),
-        ('read', 'Read'),
+        ('active', 'Active'),
         ('deleted', 'Deleted'),
     ]
 
     user_sent_it  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     user_receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content       = models.TextField()
-    state         = models.CharField(max_length=20, choices=STATE_CHOICES, default='unread')
+    state         = models.CharField(max_length=20, choices=STATE_CHOICES, default='active')
     creation_date = models.DateField(auto_now_add=True)
 
     def __str__(self):

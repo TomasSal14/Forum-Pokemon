@@ -471,7 +471,7 @@ def messages_list(request):
 
         messages = Message.objects.filter(
             Q(user_receiver_id=user_id) | Q(user_sent_it_id=user_id),
-            state__in=['unread', 'read']
+            state='active'
         ).order_by('creation_date', 'id')
         return Response(MessageSerializer(messages, many=True).data)
 
@@ -485,7 +485,7 @@ def messages_list(request):
 @api_view(['GET', 'DELETE'])
 def message_detail(request, pk):
     try:
-        message = Message.objects.get(pk=pk, state__in=['unread', 'read'])
+        message = Message.objects.get(pk=pk, state='active')
     except Message.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
